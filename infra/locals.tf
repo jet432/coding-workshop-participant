@@ -20,8 +20,8 @@ locals {
     dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")
   ]
   python_dirs = [
-    for file in fileset(format("%s/../backend", path.module), "*/function.py") :
-    dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")
+    for file in fileset(format("%s/../backend", path.module), "api/*/function.py") :
+    dirname(file)
   ]
   java_names = {
     for name in local.java_dirs : name => {
@@ -38,14 +38,21 @@ locals {
     }
   }
   python_names = {
-    for name in local.python_dirs : name => {
-      name             = name
+    for service_path in local.python_dirs : basename(service_path) => {
+      name             = basename(service_path)
       arch             = "x86_64"
       runtime          = "python3.11"
       handler          = "function.handler"
-      path             = abspath(format("%s/../backend/%s", path.module, name))
+      path             = abspath(format("%s/../backend/%s", path.module, service_path))
       patterns         = ["!__pycache__/.*", "!\\..*"]
-      pip_requirements = true
+      pip_requirements = false
+      shared_source_paths = [
+        {
+          path             = abspath(format("%s/../backend", path.module))
+          patterns         = ["!__pycache__/.*", "!\\..*", "!tests/.*", "!api/.*", "!README.md"]
+          pip_requirements = true
+        }
+      ]
     }
   }
   function_names = merge(local.java_names, local.python_names)

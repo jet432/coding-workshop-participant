@@ -26,21 +26,22 @@ Predefined environment variables are injected into each backend service automati
 
 ## Structure
 
-The backend is organized into Lambda functions, one for each CRUD service:
+The backend is organized into API packages plus shared backend services:
 
 ```
 coding-workshop-participant/
 ├── backend/               # Python backend
-│   ├── achievements/        # CRUD service for achievements
-│   │   ├── function.py        # Contains the Python service with business logic
-│   │   └── requirements.txt   # Contains the Python required dependencies
-│   ├── individuals/         # CRUD service for individuals
-│   │   └── ...                # Similar to the previous service
-│   ├── metadata/            # CRUD service for metadata
-│   │   └── ...                # Similar to the previous service
-│   ├── teams/               # CRUD service for teams
-│   │   └── ...                # Similar to the previous service
-│   └── README.md            # Backend guide
+│   ├── api/                   # Lambda entrypoints and resource APIs
+│   │   ├── achievements/
+│   │   │   ├── api.py
+│   │   │   └── function.py
+│   │   ├── auth/
+│   │   ├── individuals/
+│   │   ├── metadata/
+│   │   └── teams/
+│   ├── services/              # Shared HTTP, DB, auth, seed, and validation modules
+│   ├── requirements.txt       # Shared Python dependencies for all backend Lambdas
+│   └── README.md              # Backend guide
 ├── ...
 ```
 

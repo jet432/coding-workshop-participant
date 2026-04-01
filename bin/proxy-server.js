@@ -63,9 +63,9 @@ const server = http.createServer((req, res) => {
   }
 
   const endpointName = pathParts[1];
-  const targetUrl = endpoints[endpointName] + (parsedUrl.search || '');
+  const endpointBase = endpoints[endpointName];
 
-  if (!targetUrl) {
+  if (!endpointBase) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       error: `Unknown endpoint: ${endpointName}`,
@@ -73,6 +73,10 @@ const server = http.createServer((req, res) => {
     }));
     return;
   }
+
+  const remainderPath = pathParts.slice(2).join('/');
+  const normalizedBase = endpointBase.endsWith('/') ? endpointBase.slice(0, -1) : endpointBase;
+  const targetUrl = `${normalizedBase}${remainderPath ? `/${remainderPath}` : ''}${parsedUrl.search || ''}`;
 
   console.log(`${req.method} /api/${endpointName} -> ${targetUrl}`);
 
@@ -99,6 +103,7 @@ const server = http.createServer((req, res) => {
     headers: {
       'accept': headers.accept || 'application/json',
       'content-type': headers['content-type'] || 'application/json',
+      ...(headers.authorization ? { authorization: headers.authorization } : {}),
       'user-agent': headers['user-agent'] || 'proxy-server',
       'host': target.host
     }
