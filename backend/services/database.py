@@ -5,9 +5,10 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from services.constants import DEFAULT_DB_NAME
+from services.constants import DEFAULT_DB_NAME, SEED_TEAMS, VALID_ORGANIZATIONS
 from services.models import AppError
 from services.seed import seed_demo_data
+from services.utils import now_iso
 
 try:
     from pymongo import ASCENDING, MongoClient
@@ -73,7 +74,31 @@ def ensure_bootstrap(database: Any) -> None:
         [("scope", ASCENDING), ("entityId", ASCENDING), ("key", ASCENDING), ("month", ASCENDING)]
     )
     seed_demo_data(database)
+    ensure_team_organizations(database)
     _BOOTSTRAPPED_DATABASES.add(db_name)
+
+
+def ensure_team_organizations(database: Any) -> None:
+    """Backfill organizations for existing team documents created before the field existed."""
+
+    seed_organization_by_id = {team["id"]: team["organization"] for team in SEED_TEAMS}
+    seed_organization_by_name = {team["name"]: team["organization"] for team in SEED_TEAMS}
+    default_organization = VALID_ORGANIZATIONS[0]
+
+    for team in database["teams"].find({}):
+        organization = str(team.get("organization") or "").strip()
+        if organization:
+            continue
+        team_id = team.get("id")
+        organization = (
+            seed_organization_by_id.get(team_id)
+            or seed_organization_by_name.get(team.get("name") or "")
+            or default_organization
+        )
+        database["teams"].update_one(
+            {"id": team_id},
+            {"$set": {"organization": organization, "updatedAt": now_iso()}},
+        )
 
 
 def sanitize_document(document: dict[str, Any] | None) -> dict[str, Any] | None:

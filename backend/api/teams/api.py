@@ -10,7 +10,7 @@ from services.database import ASCENDING, assert_employee_exists, sanitize_docume
 from services.http import assert_method, execute_service_request, json_response
 from services.models import AppError, RequestContext
 from services.utils import now_iso, uuid_id
-from services.validation import normalize_text, validate_region
+from services.validation import normalize_text, validate_organization, validate_region
 
 
 def team_payload(team: dict[str, Any], database: Any) -> dict[str, Any]:
@@ -98,6 +98,7 @@ def build_team_filter(query: dict[str, str]) -> dict[str, Any]:
             {"name": {"$regex": q_value, "$options": "i"}},
             {"description": {"$regex": q_value, "$options": "i"}},
             {"region": {"$regex": q_value, "$options": "i"}},
+            {"organization": {"$regex": q_value, "$options": "i"}},
         ]
     if region:
         filters["region"] = {"$regex": f"^{re.escape(region)}$", "$options": "i"}
@@ -169,6 +170,7 @@ def validate_team_payload(
         "name": normalize_text(payload.get("name"), "name"),
         "description": normalize_text(payload.get("description"), "description", required=False),
         "region": validate_region(payload.get("region")),
+        "organization": validate_organization(payload.get("organization")),
         "leaderEmployeeId": leader_employee_id,
     }
     return validated, validate_member_employee_ids(

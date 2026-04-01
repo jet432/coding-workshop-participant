@@ -19,6 +19,7 @@ from api.individuals.api import employee_projection  # noqa: E402
 from api.teams.api import (  # noqa: E402
     build_dashboard_summary,
     validate_member_employee_ids,
+    validate_team_payload,
 )
 
 
@@ -218,6 +219,25 @@ class SharedApiTests(unittest.TestCase):
 
         member_ids = validate_member_employee_ids(self.database, "emp-002", ["emp-001"], "team-001")
         self.assertEqual(member_ids, ["emp-001"])
+
+    def test_team_payload_rejects_unknown_organization(self) -> None:
+        """Team payload validation should only allow configured organizations."""
+
+        with self.assertRaises(AppError) as context:
+            validate_team_payload(
+                self.database,
+                {
+                    "name": "Meridian",
+                    "description": "New strategic team",
+                    "region": "NAM",
+                    "organization": "Retail Banking",
+                    "leaderEmployeeId": "emp-001",
+                    "memberEmployeeIds": ["emp-002"],
+                },
+                "team-001",
+            )
+
+        self.assertEqual(context.exception.code, "validation_error")
 
 
 if __name__ == "__main__":

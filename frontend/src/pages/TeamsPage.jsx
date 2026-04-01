@@ -26,6 +26,7 @@ const EMPTY_FORM = {
   name: '',
   description: '',
   region: '',
+  organization: '',
   leaderEmployeeId: '',
   memberEmployeeIds: [],
 }
@@ -37,6 +38,12 @@ const REGION_OPTIONS = [
   { value: 'EU', label: 'EU' },
 ]
 
+const ORGANIZATION_OPTIONS = [
+  { value: 'Enterprise Technology', label: 'Enterprise Technology' },
+  { value: 'Credit Card', label: 'Credit Card' },
+  { value: 'Private Banking', label: 'Private Banking' },
+]
+
 /**
  * Validate team form values.
  *
@@ -46,12 +53,18 @@ const REGION_OPTIONS = [
 function validateTeam(values) {
   const errors = {}
   const validRegions = new Set(REGION_OPTIONS.map((option) => option.value))
+  const validOrganizations = new Set(ORGANIZATION_OPTIONS.map((option) => option.value))
 
   if (!values.name.trim()) errors.name = 'Team name is required.'
   if (!values.region) {
     errors.region = 'Region is required.'
   } else if (!validRegions.has(values.region)) {
     errors.region = 'Use one of: NAM, LATAM, APAC, EU.'
+  }
+  if (!values.organization) {
+    errors.organization = 'Organization is required.'
+  } else if (!validOrganizations.has(values.organization)) {
+    errors.organization = 'Use one of: Enterprise Technology, Credit Card, Private Banking.'
   }
   if (!values.leaderEmployeeId) errors.leaderEmployeeId = 'Select a team leader.'
   if ((values.memberEmployeeIds || []).includes(values.leaderEmployeeId)) {
@@ -181,6 +194,7 @@ function TeamsPage() {
       name: team.name || '',
       description: team.description || '',
       region: team.region || '',
+      organization: team.organization || '',
       leaderEmployeeId: team.leaderEmployeeId || '',
       memberEmployeeIds: team.members.map((member) => member.employeeId),
     })
@@ -243,6 +257,12 @@ function TeamsPage() {
     { name: 'description', label: 'Description', type: 'textarea' },
     { name: 'region', label: 'Region', type: 'select', options: REGION_OPTIONS },
     {
+      name: 'organization',
+      label: 'Organization',
+      type: 'select',
+      options: ORGANIZATION_OPTIONS,
+    },
+    {
       name: 'leaderEmployeeId',
       label: 'Leader',
       type: 'select',
@@ -304,6 +324,7 @@ function TeamsPage() {
                 <TableRow>
                   <TableCell>Team</TableCell>
                   <TableCell>Leader</TableCell>
+                  <TableCell>Organizations</TableCell>
                   <TableCell>Members</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -320,6 +341,7 @@ function TeamsPage() {
                     <TableCell>
                       {team.leader?.firstName} {team.leader?.lastName}
                     </TableCell>
+                    <TableCell>{team.organization || 'Unassigned'}</TableCell>
                     <TableCell>
                       <Stack direction="row" flexWrap="wrap" gap={1}>
                         <Chip label={`${team.memberCount} members`} size="small" />

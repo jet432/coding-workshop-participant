@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from services.constants import VALID_REGIONS
+from services.constants import VALID_ORGANIZATIONS, VALID_REGIONS
 from services.models import AppError
 
 
@@ -54,3 +54,19 @@ def validate_region(value: Any, field_name: str = "region", required: bool = Tru
             f"{field_name} must be one of: {', '.join(VALID_REGIONS)}.",
         )
     return normalized_region
+
+
+def validate_organization(value: Any, field_name: str = "organization", required: bool = True) -> str | None:
+    """Validate an organization against the supported organization names."""
+
+    organization = normalize_text(value, field_name, required=required)
+    if organization is None:
+        return None
+    for valid_organization in VALID_ORGANIZATIONS:
+        if valid_organization.casefold() == organization.casefold():
+            return valid_organization
+    raise AppError(
+        400,
+        "validation_error",
+        f"{field_name} must be one of: {', '.join(VALID_ORGANIZATIONS)}.",
+    )

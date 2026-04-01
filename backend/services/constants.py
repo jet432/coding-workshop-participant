@@ -5,6 +5,7 @@ ACCESS_TOKEN_HOURS = 8
 REFRESH_TOKEN_DAYS = 14
 DEFAULT_DB_NAME = "coding_workshop"
 VALID_REGIONS = ("NAM", "LATAM", "APAC", "EU")
+VALID_ORGANIZATIONS = ("Enterprise Technology", "Credit Card", "Private Banking")
 
 SEED_USERS = [
     {
@@ -140,6 +141,7 @@ SEED_TEAMS = [
         "name": "Platform",
         "description": "Builds shared internal product capabilities.",
         "region": "NAM",
+        "organization": "Enterprise Technology",
         "leaderEmployeeId": "emp-001",
     },
     {
@@ -147,6 +149,7 @@ SEED_TEAMS = [
         "name": "Pulse",
         "description": "Delivers customer engagement campaigns.",
         "region": "LATAM",
+        "organization": "Credit Card",
         "leaderEmployeeId": "emp-002",
     },
     {
@@ -154,6 +157,7 @@ SEED_TEAMS = [
         "name": "Orbit",
         "description": "Handles analytics and reporting initiatives.",
         "region": "APAC",
+        "organization": "Private Banking",
         "leaderEmployeeId": "emp-003",
     },
 ]
