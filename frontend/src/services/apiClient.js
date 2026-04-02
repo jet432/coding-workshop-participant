@@ -254,8 +254,8 @@ async function request(service, path = '', options = {}, allowRefresh = true) {
  * Shared API client helpers.
  */
 export const apiClient = {
-  get(service, path = '') {
-    return request(service, path, { method: 'GET' })
+  get(service, path = '', options = {}) {
+    return request(service, path, { method: 'GET', ...options })
   },
   post(service, path = '', body = {}, options = {}) {
     return request(service, path, {

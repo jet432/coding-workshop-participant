@@ -220,6 +220,18 @@ class SharedApiTests(unittest.TestCase):
         member_ids = validate_member_employee_ids(self.database, "emp-002", ["emp-001"], "team-001")
         self.assertEqual(member_ids, ["emp-001"])
 
+    def test_existing_cross_team_leader_member_can_be_preserved_during_team_edits(self) -> None:
+        """Legacy invalid memberships should not block unrelated team edits."""
+
+        member_ids = validate_member_employee_ids(
+            self.database,
+            "emp-001",
+            ["emp-003"],
+            "team-001",
+            {"emp-003"},
+        )
+        self.assertEqual(member_ids, ["emp-003"])
+
     def test_team_payload_rejects_unknown_organization(self) -> None:
         """Team payload validation should only allow configured organizations."""
 

@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types'
 import {
-  Alert,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -35,19 +35,29 @@ function EntityDialog({
 }) {
   return (
     <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ pt: 1 }}>
-        <Stack spacing={2.25}>
-          {error && <Alert severity="error">{error}</Alert>}
-          {fields.map((field) => {
+      <DialogTitle sx={{ px: 3, pb: 1.25, pt: 3 }}>{title}</DialogTitle>
+      <DialogContent sx={{ px: 3, pb: 1.5, pt: '24px !important' }}>
+        <Stack spacing={2}>
+          {error && (
+            <FormHelperText error sx={{ m: 0 }}>
+              {error}
+            </FormHelperText>
+          )}
+          {fields.map((field, index) => {
             const value = field.type === 'multiselect' ? values[field.name] || [] : values[field.name] || ''
-            const helperText = fieldErrors[field.name] || field.helperText || ' '
+            const hasFieldError = Boolean(fieldErrors[field.name])
+            const helperText = fieldErrors[field.name] || field.helperText
+            const fieldId = `entity-dialog-${field.name}`
+            const labelId = `${fieldId}-label`
+            const fieldSpacingSx = index === 0 ? { mt: 0.5 } : undefined
 
             if (field.type === 'select' || field.type === 'multiselect') {
               return (
-                <FormControl fullWidth key={field.name} margin="dense">
-                  <InputLabel>{field.label}</InputLabel>
+                <FormControl error={hasFieldError} fullWidth key={field.name} sx={fieldSpacingSx}>
+                  <InputLabel id={labelId}>{field.label}</InputLabel>
                   <Select
+                    id={fieldId}
+                    labelId={labelId}
                     label={field.label}
                     multiple={field.type === 'multiselect'}
                     value={value}
@@ -59,13 +69,7 @@ function EntityDialog({
                       </MenuItem>
                     ))}
                   </Select>
-                  <Alert
-                    icon={false}
-                    severity={fieldErrors[field.name] ? 'error' : 'info'}
-                    sx={{ mt: 1, py: 0, px: 0.5 }}
-                  >
-                    {helperText}
-                  </Alert>
+                  {helperText && <FormHelperText>{helperText}</FormHelperText>}
                 </FormControl>
               )
             }
@@ -74,14 +78,14 @@ function EntityDialog({
               <TextField
                 fullWidth
                 key={field.name}
-                margin="dense"
                 type={field.type === 'email' ? 'email' : 'text'}
                 multiline={field.type === 'textarea'}
                 minRows={field.type === 'textarea' ? 3 : undefined}
+                sx={fieldSpacingSx}
                 label={field.label}
                 value={value}
                 onChange={(event) => onChange(field.name, event.target.value)}
-                error={Boolean(fieldErrors[field.name])}
+                error={hasFieldError}
                 helperText={helperText}
               />
             )

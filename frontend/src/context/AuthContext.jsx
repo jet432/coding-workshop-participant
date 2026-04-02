@@ -92,7 +92,11 @@ export function AuthProvider({ children }) {
     })
 
     apiClient
-      .get('auth', '/me')
+      .get('auth', '/me', {
+        headers: {
+          Authorization: `Bearer ${parsedSession.accessToken}`,
+        },
+      })
       .then((response) => {
         const nextSession = {
           user: response.user,

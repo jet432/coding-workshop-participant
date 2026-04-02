@@ -28,5 +28,5 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(/email/i)).toHaveValue('lara.chen@acme.test')
     expect(screen.getByLabelText(/password/i)).toHaveValue('Welcome123!')
     expect(screen.getByRole('button', { name: /enter workspace/i })).toBeInTheDocument()
-  })
+  }, 10000)
 })

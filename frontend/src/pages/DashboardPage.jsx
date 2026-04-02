@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Chip,
   Grid,
   List,
@@ -13,6 +14,21 @@ import { useEffect, useState } from 'react'
 import LoadingState from '../components/LoadingState.jsx'
 import SectionCard from '../components/SectionCard.jsx'
 import { apiClient } from '../services/apiClient.js'
+import apacIcon from '../assets/regions/APAC.png'
+import assignIcon from '../assets/dashboard/assign.png'
+import employeeIcon from '../assets/dashboard/employee.png'
+import euIcon from '../assets/regions/EU.png'
+import latamIcon from '../assets/regions/LATAM.png'
+import namIcon from '../assets/regions/NAM.png'
+import teamIcon from '../assets/dashboard/team.png'
+import trophyIcon from '../assets/dashboard/trophy.png'
+
+const REGION_ICONS = {
+  APAC: apacIcon,
+  EU: euIcon,
+  LATAM: latamIcon,
+  NAM: namIcon,
+}
 
 /**
  * Render the dashboard page.
@@ -48,10 +64,10 @@ function DashboardPage() {
   }
 
   const overviewCards = [
-    { label: 'Teams', value: state.data.overview.teamCount },
-    { label: 'Employees', value: state.data.overview.employeeCount },
-    { label: 'Assignments', value: state.data.overview.memberAssignmentCount },
-    { label: 'Achievements', value: state.data.overview.achievementCount },
+    { label: 'Teams', value: state.data.overview.teamCount, icon: teamIcon },
+    { label: 'Employees', value: state.data.overview.employeeCount, icon: employeeIcon },
+    { label: 'Assignments', value: state.data.overview.memberAssignmentCount, icon: assignIcon },
+    { label: 'Achievements', value: state.data.overview.achievementCount, icon: trophyIcon },
   ]
   const teamsByRegion = state.data.teamsByRegion || state.data.teamsByLocation || []
 
@@ -67,11 +83,29 @@ function DashboardPage() {
               <Stack
                 spacing={0.75}
                 sx={{
+                  position: 'relative',
                   borderRadius: 4,
                   bgcolor: 'rgba(29, 122, 112, 0.08)',
+                  minHeight: 120,
+                  overflow: 'hidden',
                   p: 2.25,
+                  pr: 8,
                 }}
               >
+                <Box
+                  component="img"
+                  src={card.icon}
+                  alt={`${card.label} icon`}
+                  sx={{
+                    position: 'absolute',
+                    top: 18,
+                    right: 18,
+                    width: 34,
+                    height: 34,
+                    objectFit: 'contain',
+                    opacity: 0.82,
+                  }}
+                />
                 <Typography color="text.secondary" variant="body2">
                   {card.label}
                 </Typography>
@@ -89,14 +123,33 @@ function DashboardPage() {
             subtitle="The in-scope dashboard still tracks which regions teams sit in."
           >
             <List disablePadding>
-              {teamsByRegion.map((bucket) => (
-                <ListItem divider disableGutters key={bucket.region}>
-                  <ListItemText
-                    primary={bucket.region}
-                    secondary={`${bucket.teamCount} team${bucket.teamCount === 1 ? '' : 's'}`}
-                  />
-                </ListItem>
-              ))}
+              {teamsByRegion.map((bucket) => {
+                const regionIcon = REGION_ICONS[bucket.region]
+
+                return (
+                  <ListItem divider disableGutters key={bucket.region} sx={{ py: 1.25 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      {regionIcon && (
+                        <Box
+                          component="img"
+                          src={regionIcon}
+                          alt={`${bucket.region} region icon`}
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            objectFit: 'contain',
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      <ListItemText
+                        primary={bucket.region}
+                        secondary={`${bucket.teamCount} team${bucket.teamCount === 1 ? '' : 's'}`}
+                      />
+                    </Stack>
+                  </ListItem>
+                )
+              })}
             </List>
           </SectionCard>
         </Grid>

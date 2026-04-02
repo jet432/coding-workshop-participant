@@ -109,13 +109,14 @@ def assert_can_assign_regular_member(
     database: Any,
     employee_id: str,
     team_id: str | None = None,
+    allow_existing_assignment: bool = False,
 ) -> None:
     """Block employees who lead another team from becoming regular members."""
 
     leader_teams = sanitize_documents(list(database["teams"].find({"leaderEmployeeId": employee_id})))
     conflicting_teams = [team for team in leader_teams if team["id"] != team_id]
 
-    if conflicting_teams:
+    if conflicting_teams and not allow_existing_assignment:
         raise AppError(
             409,
             "leader_membership_conflict",
@@ -133,6 +134,7 @@ def validate_member_employee_ids(
     leader_employee_id: str,
     employee_ids: list[Any],
     team_id: str | None = None,
+    existing_member_ids: set[str] | None = None,
 ) -> list[str]:
     """Validate member employee IDs for a team."""
 
@@ -143,7 +145,12 @@ def validate_member_employee_ids(
             raise AppError(400, "validation_error", "The leader cannot also appear as a regular member.")
         if employee_text not in member_ids:
             assert_employee_exists(database, employee_text)
-            assert_can_assign_regular_member(database, employee_text, team_id)
+            assert_can_assign_regular_member(
+                database,
+                employee_text,
+                team_id,
+                allow_existing_assignment=bool(existing_member_ids and employee_text in existing_member_ids),
+            )
             member_ids.append(employee_text)
     if len(member_ids) > MAX_TEAM_MEMBERS:
         raise AppError(
@@ -158,6 +165,7 @@ def validate_team_payload(
     database: Any,
     payload: dict[str, Any],
     team_id: str | None = None,
+    existing_member_ids: set[str] | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Validate team create/update data."""
 
@@ -178,7 +186,17 @@ def validate_team_payload(
         leader_employee_id or "",
         member_employee_ids,
         team_id,
+        existing_member_ids,
     )
+
+
+def get_team_member_ids(database: Any, team_id: str) -> set[str]:
+    """Return the current regular-member employee IDs for a team."""
+
+    return {
+        membership["employeeId"]
+        for membership in sanitize_documents(database["team_employees"].find({"teamId": team_id}))
+    }
 
 
 def create_team(database: Any, payload: dict[str, Any]) -> dict[str, Any]:
@@ -238,7 +256,13 @@ def replace_team_members(database: Any, team_id: str, member_employee_ids: list[
 def update_team(database: Any, team_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Update a team record and optionally replace its members."""
 
-    validated, member_employee_ids = validate_team_payload(database, payload, team_id)
+    existing_member_ids = get_team_member_ids(database, team_id)
+    validated, member_employee_ids = validate_team_payload(
+        database,
+        payload,
+        team_id,
+        existing_member_ids,
+    )
     current_team = sanitize_document(database["teams"].find_one({"id": team_id})) or {}
     current_leader = current_team.get("leaderEmployeeId")
     next_leader = validated["leaderEmployeeId"]
@@ -254,6 +278,7 @@ def update_team(database: Any, team_id: str, payload: dict[str, Any]) -> dict[st
         next_leader,
         member_employee_ids,
         team_id,
+        existing_member_ids,
     )
     validated["updatedAt"] = now_iso()
     database["teams"].update_one({"id": team_id}, {"$set": validated})
@@ -319,17 +344,21 @@ def update_team_leader(database: Any, team_id: str, payload: dict[str, Any]) -> 
     if current_leader_id == new_leader_id:
         return team_payload(database["teams"].find_one({"id": team_id}), database)
     database["team_employees"].delete_many({"teamId": team_id, "employeeId": new_leader_id})
-    member_ids = [
-        membership["employeeId"]
-        for membership in sanitize_documents(database["team_employees"].find({"teamId": team_id}))
-    ]
+    existing_member_ids = get_team_member_ids(database, team_id)
+    member_ids = list(existing_member_ids)
     if (
         current_leader_id
         and current_leader_id not in member_ids
         and len(member_ids) < MAX_TEAM_MEMBERS
     ):
         member_ids.append(current_leader_id)
-    member_ids = validate_member_employee_ids(database, new_leader_id or "", member_ids, team_id)
+    member_ids = validate_member_employee_ids(
+        database,
+        new_leader_id or "",
+        member_ids,
+        team_id,
+        existing_member_ids,
+    )
     replace_team_members(database, team_id, member_ids)
     database["teams"].update_one(
         {"id": team_id},
